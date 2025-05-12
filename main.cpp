@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <iostream>
+#include <fstream>
 #include "Structs.h"
 #include "Functions.h"
 
@@ -10,23 +11,29 @@ int main()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
     TTF_Init();
-    SDL_Window *window = SDL_CreateWindow("Buttons", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 800, 0);
+    SDL_Window *window = SDL_CreateWindow("Overflowing Wine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 800, 0);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, 0, 0);
     SDL_Event event;
 
     // Button Test_Button = Create_Button(Object{{300, 550}, {1000, 200}}, Create_Image(renderer, "./Media/Button.png"));
     // Test_Button.On_Press = reinterpret_cast<void*>(&Print_Thing);
 
-    NameTag Speaker = Create_Nametag(Object{{0, 0}, {100, 25}, {255, 255, 255, 10}}, "./Media/Fonts/Vividly-Regular.ttf", SDL_Color{255, 255, 255}, 20, "YOU");
-    Speaker.Update(renderer);
-    Textbox Test_Texbox = Create_Textbox(Create_Button(Object{{300, 550}, {1000, 200}, {255, 255, 255, 10}}, Create_Image(renderer, "./Media/Images/Button.png")), "./Media/Fonts/Vividly-Regular.ttf", SDL_Color{255, 255, 255}, 50, "THIS IS SO COOL!!", Speaker);
-    Test_Texbox.box.On_Press = reinterpret_cast<void*>(&Next_Textbox);
-    Test_Texbox.Next_Textbox(renderer);
-    int Text_Render_Speed = 100;
+    NameTag speaker = Create_Nametag(Object{{0, 0}, {200, 25}, {255, 255, 255, 50}}, "./Media/Fonts/TypeWheel/TypeWheel.ttf", SDL_Color{255, 255, 255}, 20, "YOU");
+
+    Textbox Test_Texbox = Create_Textbox(Create_Button(Object{{300, 550}, {1000, 200}, {255, 255, 255, 50}}, Create_Image(renderer, "./Media/Images/Textbox.png")), speaker, "./Media/Fonts/TypeWheel/TypeWheel.ttf", SDL_Color{255, 255, 255}, 25, "THIS IS SO COOL!!");
+    Test_Texbox.box.On_Press = reinterpret_cast<void*>(&Reset_Textbox);
+    
+
+    Test_Texbox.Reset_Textbox(renderer);
+    
+    int Text_Render_Speed = 20;
     Vector2_int MousePos;
     bool mouse_click = false;
 
     bool quit = false;
+
+    std::fstream Script("./Media/Script.txt");
+    Set_Textbox(&Script, &Test_Texbox);
 
     Uint32 NOW = SDL_GetTicks();
     Uint32 LAST = 0;
@@ -48,7 +55,7 @@ int main()
             Last_Text_Render = NOW;
         }
 
-        Render_Textbox(renderer, Test_Texbox);
+        Render_Textbox(renderer, &Test_Texbox);
 
         if(SDL_PollEvent(&event))
         {
@@ -63,12 +70,29 @@ int main()
                 {
                     if(Test_Texbox.display_text != Test_Texbox.text)
                     {
-                        Text_Render_Speed = 0;
+                        Test_Texbox.display_text = Test_Texbox.text;
                     }
                     else
                     {
-                        Text_Render_Speed = 100;
-                        Test_Texbox.text = "LOOK AT ME!!! I'M DIFFERENT NOW!";
+                        Set_Textbox(&Script, &Test_Texbox);
+                        Text_Render_Speed = 20;
+                        callFunction<void>(Test_Texbox.box.On_Press, renderer, &Test_Texbox);
+                    }
+                    Last_Text_Render = NOW;
+                }
+            }
+            if(event.type == SDL_KEYDOWN)
+            {
+                if(event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_SPACE)
+                {
+                    if(Test_Texbox.display_text != Test_Texbox.text)
+                    {
+                        Test_Texbox.display_text = Test_Texbox.text;
+                    }
+                    else
+                    {
+                        Set_Textbox(&Script, &Test_Texbox);
+                        Text_Render_Speed = 20;
                         callFunction<void>(Test_Texbox.box.On_Press, renderer, &Test_Texbox);
                     }
                     Last_Text_Render = NOW;

@@ -1,5 +1,8 @@
 #include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <iostream>
+#include <fstream>
 
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
@@ -69,25 +72,36 @@ void Render_Button(SDL_Renderer *renderer, Button button)
    Render_Object(renderer, button.object);
 }
 
-NameTag Create_Nametag(Object obj, char* file, SDL_Color color, int size, char* Name)
+NameTag Create_Nametag(Object obj, char* file, SDL_Color color, int size, std::string text)
 {
     NameTag out;
     out.object = obj;
     out.font_file = file;
     out.font_color = color;
     out.size = size;
-    out.Name = Name;
+    out.Text = text;
+
     return out;
 }
 
-void Render_Nametag(SDL_Renderer *renderer, NameTag a)
+void Render_NameTag(SDL_Renderer *renderer, NameTag *Name)
 {
-    SDL_Rect Dest = a.Get_Textbox();
-    // Render_Object(renderer, a.object);
-    SDL_RenderCopy(renderer, a.Text_Texture, nullptr, &Dest);
+    TTF_Font *tempFont = TTF_OpenFont(Name->font_file, Name->size);
+    TTF_SetFontStyle(tempFont, TTF_STYLE_BOLD);
+    Name->Text_Surface = TTF_RenderText_Solid(tempFont, Name->Text.c_str(), Name->font_color);
+    Name->Text_Texture = SDL_CreateTextureFromSurface(renderer, Name->Text_Surface);
+
+    SDL_Rect Dest = {Name->object.Position.x + 10, Name->object.Position.y + 5, Name->Text_Surface->w, Name->Text_Surface->h};
+
+    SDL_RenderCopy(renderer, Name->Text_Texture, nullptr, &Dest);
+    SDL_FreeSurface(Name->Text_Surface);
+    SDL_DestroyTexture(Name->Text_Texture);
+    TTF_CloseFont(tempFont);
+
+    Render_Object(renderer, Name->object);
 }
 
-Textbox Create_Textbox(Button box, char* file, SDL_Color color, int size, std::string text, NameTag Speaker)
+Textbox Create_Textbox(Button box, NameTag Speaker, char* file, SDL_Color color, int size, std::string text)
 {
     Textbox out;
     out.box = box;
@@ -95,25 +109,44 @@ Textbox Create_Textbox(Button box, char* file, SDL_Color color, int size, std::s
     out.font_color = color;
     out.size = size;
     out.text = text;
+    Speaker.object.Position = box.object.Position;
+    Speaker.object.Position.y -= Speaker.object.Scale.y;
     out.Speaker = Speaker;
 
     return out;
 }
 
-void Render_Textbox(SDL_Renderer *renderer, Textbox textbox)
+void Render_Textbox(SDL_Renderer *renderer, Textbox *textbox)
 {
-    SDL_Rect Dest = textbox.Get_Textbox();
-    textbox.Speaker.object.Position = textbox.box.object.Position;
-    textbox.Speaker.object.Position.y -= textbox.Speaker.object.Scale.y;
-    
-    // Render_Button(renderer, textbox.box);
-    // SDL_RenderCopy(renderer, textbox.Text_Texture, nullptr, &Dest);
-    Render_Nametag(renderer, textbox.Speaker);
+    TTF_Font *tempFont = TTF_OpenFont(textbox->font_file, textbox->size);
+    TTF_SetFontStyle(tempFont, textbox->style);
+    textbox->Text_Surface = TTF_RenderText_Solid_Wrapped(tempFont, textbox->display_text.c_str(), textbox->font_color, textbox->box.object.Scale.x - 20);
+    textbox->Text_Texture = SDL_CreateTextureFromSurface(renderer, textbox->Text_Surface);
+    SDL_Rect Dest = {textbox->box.object.Position.x + 20, textbox->box.object.Position.y + 20, textbox->Text_Surface->w, textbox->Text_Surface->h};
+
+    SDL_RenderCopy(renderer, textbox->Text_Texture, nullptr, &Dest);
+    SDL_FreeSurface(textbox->Text_Surface);
+    SDL_DestroyTexture(textbox->Text_Texture);
+    TTF_CloseFont(tempFont);
+    Render_Button(renderer, textbox->box);
+
+    Render_NameTag(renderer, &textbox->Speaker);
 }
 
-void Next_Textbox(SDL_Renderer *renderer, Textbox *textbox)
+void Set_Textbox(std::fstream *File, Textbox *Textbox)
 {
-    (*textbox).Next_Textbox(renderer);
+    std::string Name, Style, Text;
+    std::getline(*File, Name);
+    std::getline(*File, Style);
+    std::getline(*File, Text);
+    Textbox->Speaker.Text = Name;
+    Textbox->text = Text;
+    Textbox->style = (int)(Style[0]) - 48;
+}
+
+void Reset_Textbox(SDL_Renderer *renderer, Textbox *textbox)
+{
+    (*textbox).Reset_Textbox(renderer);
 }
 
 #endif

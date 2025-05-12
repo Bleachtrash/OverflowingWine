@@ -57,71 +57,40 @@ struct Button
 
 struct NameTag
 {
-    
-    private:
-        TTF_Font *font;
-
-    public:
-        Object object;
-        char* Name;
-        int size;
-        SDL_Surface *Text_Surface;
-        SDL_Texture *Text_Texture;
-        char* font_file;
-        SDL_Color font_color;
-
-        void Update(SDL_Renderer *renderer)
-        {
-            font = TTF_OpenFont(font_file, size);
-            Text_Surface = TTF_RenderText_Solid(font, Name, font_color);
-            Text_Texture = SDL_CreateTextureFromSurface(renderer, Text_Surface);
-            SDL_FreeSurface(Text_Surface);
-        }
-        SDL_Rect Get_Textbox()
-        {
-            return {object.Position.x + 100, object.Position.y + 50, Text_Surface->w, Text_Surface->h};
-        }
-
+    Object object;
+    char* font_file;
+    SDL_Color font_color;
+    int size;
+    std::string Text;
+    SDL_Surface *Text_Surface;
+    SDL_Texture *Text_Texture;
 };
 
 struct Textbox
 {
-    public:
-        Button box;
-        char* font_file;
-        SDL_Color font_color;
-        int size;
-        std::string text;
-        NameTag Speaker;
-        SDL_Surface *Text_Surface;
-        SDL_Texture *Text_Texture;
-        std::string display_text = " ";
-        TTF_Font *font;
+    Button box;
+    int style;
+    NameTag Speaker;
+    char* font_file;
+    SDL_Color font_color;
+    int size;
+    std::string text;
+    SDL_Surface *Text_Surface;
+    SDL_Texture *Text_Texture;
+    std::string display_text = " ";
 
-        void Next_Textbox(SDL_Renderer *renderer)
+    void Reset_Textbox(SDL_Renderer *renderer)
+    {
+        display_text = "";
+        display_text += text[0];
+    }
+    void Update_Textbox(SDL_Renderer *renderer)
+    {
+        if(display_text == text)
         {
-            font = TTF_OpenFont(font_file, size);
-            display_text = "";
-            display_text += text[0];
-            Text_Surface = TTF_RenderText_Solid(font, display_text.c_str(), font_color);
-            Text_Texture = SDL_CreateTextureFromSurface(renderer, Text_Surface);
-            SDL_FreeSurface(Text_Surface);
+            return;
         }
-        void Update_Textbox(SDL_Renderer *renderer)
-        {
-            if(display_text == text)
-            {
-                return;
-            }
-
-            display_text = text.substr(0, display_text.size()+1);
-            Text_Surface = TTF_RenderText_Solid(font, display_text.c_str(), font_color);
-            Text_Texture = SDL_CreateTextureFromSurface(renderer, Text_Surface);
-            SDL_FreeSurface(Text_Surface);
-        }
-        SDL_Rect Get_Textbox()
-        {
-            return {box.object.Position.x + 100, box.object.Position.y + 50, Text_Surface->w, Text_Surface->h};
-        }
+        display_text = text.substr(0, display_text.size()+1);
+    }
 };
 #endif
