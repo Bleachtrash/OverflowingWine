@@ -51,8 +51,14 @@ struct Image
 struct Button
 {
     Object object; // Button Object
-    Image image; // Button Image
     void *On_Press; //Function that triggers on press
+};
+
+struct ButtonImage
+{
+    Button button;
+    Image image;
+    std::string Script_Path;
 };
 
 struct NameTag
